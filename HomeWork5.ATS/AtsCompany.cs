@@ -28,7 +28,6 @@ namespace HomeWork5.ATS
             Clients = new List<Client>();
             BaseOfCalls = new List<Dictionary<Client, List<Call>>>();
 
-
             for (var i = 0; i < 100; i++)
             {
                 var number = GenerateNumber();
@@ -53,6 +52,14 @@ namespace HomeWork5.ATS
             var indexOfClient = Clients.IndexOf(client);
             client.Terminal = Terminals[indexOfClient];
             client.Plan = TariffPlans[new Random().Next(3)];
+
+            client.NotifyStartCall += client.StartCall;
+            client.NotifyStartCall += StartCall;
+
+            client.NotifyEndCall += client.EndCall;
+            client.NotifyEndCall += EndCall;
+
+            client.NotifyFailCall += client.FailCall;
         }
 
         public void EndingMonth(int month)
@@ -71,19 +78,16 @@ namespace HomeWork5.ATS
             BaseOfCalls.Add(monthReport);
         }
 
-        public static void StartCall(Client sender, CallingNotificationEventArgs eventArgs)
+        public void StartCall(Client sender, CallingNotificationEventArgs eventArgs)
         {
-            Console.WriteLine($"Client {sender.Name} starting a call to {eventArgs.Recipient.Name} at {eventArgs.DateTime}");
+            sender.Terminal.Port.Status = PortStatus.Call;
+            eventArgs.Recipient.Terminal.Port.Status = PortStatus.Call;
         }
 
-        public static void FailCall(Client sender, CallingNotificationEventArgs eventArgs)
+        public void EndCall(Client sender, CallingNotificationEventArgs eventArgs)
         {
-            Console.WriteLine($"Client {sender.Name} can't reach {eventArgs.Recipient.Name} at {eventArgs.DateTime}. Port status is {eventArgs.Recipient.Terminal.Port.Status}");
-        }
-
-        public static void EndCall(Client sender, CallingNotificationEventArgs eventArgs)
-        {
-            Console.WriteLine($"Client {sender.Name} ending a call to {eventArgs.Recipient.Name} at {eventArgs.DateTime}");
+            sender.Terminal.Port.Status = PortStatus.Connected;
+            eventArgs.Recipient.Terminal.Port.Status = PortStatus.Connected;
         }
 
         public void LoggingToFile(Client client, int month)

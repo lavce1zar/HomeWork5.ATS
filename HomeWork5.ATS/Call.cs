@@ -8,11 +8,11 @@ namespace HomeWork5.ATS
 {
     public class Call
     {
-        public Client? Caller { get; set; }
+        public Client? Caller { get; private set; }
 
-        public Client? Recipient { get; set; }
+        public Client? Recipient { get; private set; }
         
-        public DateTime StartOfCall { get; set; }
+        public DateTime StartOfCall { get; private set; }
 
         public DateTime EndOfCall { get; set; }
 

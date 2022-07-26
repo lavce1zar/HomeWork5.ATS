@@ -10,11 +10,13 @@ namespace HomeWork5.ATS
 
     public class Client
     {
-        public event CallingHandler NotifyAts;
+        public event CallingHandler NotifyStartCall;
+        public event CallingHandler NotifyEndCall;
+        public event CallingHandler NotifyFailCall;
 
-        public string? Name { get; set; }
+        public string? Name { get; private set; }
         
-        public Terminal? Terminal;
+        public Terminal? Terminal { get; set; }
 
         public TariffPlan? Plan { get; set; }
 
@@ -36,38 +38,22 @@ namespace HomeWork5.ATS
         {
             ConnectTerminalToPort();
 
-            if (this.Terminal.CanCall(recipient.Terminal))
+            if (Terminal.CanCall(recipient.Terminal))
             {
-                this.Terminal.Port.Status = PortStatus.Call;
-                recipient.Terminal.Port.Status = PortStatus.Call;
-
                 var call = new Call(this, recipient, dateTime);
 
-                NotifyAts += AtsCompany.StartCall;
-                NotifyAts?.Invoke(this, new CallingNotificationEventArgs(recipient, dateTime));
-                NotifyAts -= AtsCompany.StartCall;
-
-                // var thread = new Thread(Terminal.Call);
-
-                // thread.Start();
+                NotifyStartCall?.Invoke(this, new CallingNotificationEventArgs(recipient, dateTime));
 
                 dateTime = dateTime.AddMilliseconds(new Random().Next(60000, 300000));
 
-                NotifyAts += AtsCompany.EndCall;
-                NotifyAts?.Invoke(this, new CallingNotificationEventArgs(recipient, dateTime));
-                NotifyAts -= AtsCompany.EndCall;
-
+                NotifyEndCall?.Invoke(this, new CallingNotificationEventArgs(recipient, dateTime));
+                
                 call.EndOfCall = dateTime;
                 Calls.Add(call);
-
-                this.Terminal.Port.Status = PortStatus.Connected;
-                recipient.Terminal.Port.Status = PortStatus.Connected;
             }
             else
             {
-                NotifyAts += AtsCompany.FailCall;
-                NotifyAts?.Invoke(this, new CallingNotificationEventArgs(recipient, dateTime));
-                NotifyAts -= AtsCompany.FailCall;
+                NotifyFailCall?.Invoke(this, new CallingNotificationEventArgs(recipient, dateTime));
             }
         }
 
@@ -122,6 +108,21 @@ namespace HomeWork5.ATS
         {
             var sortedByDuration = LastMonthCalls?.OrderBy(x => x.Duration).ToList();
             LastMonthCalls = sortedByDuration;
+        }
+
+        public void StartCall(Client sender, CallingNotificationEventArgs eventArgs)
+        {
+            Console.WriteLine($"Client {this.Name} starting a call to {eventArgs.Recipient.Name} at {eventArgs.DateTime}");
+        }
+
+        public void FailCall(Client sender, CallingNotificationEventArgs eventArgs)
+        {
+            Console.WriteLine($"Client {this.Name} can't reach {eventArgs.Recipient.Name} at {eventArgs.DateTime}. Port status is {eventArgs.Recipient.Terminal.Port.Status}");
+        }
+
+        public void EndCall(Client sender, CallingNotificationEventArgs eventArgs)
+        {
+            Console.WriteLine($"Client {this.Name} ending a call to {eventArgs.Recipient.Name} at {eventArgs.DateTime}");
         }
     }
 }
